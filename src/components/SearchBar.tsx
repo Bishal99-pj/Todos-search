@@ -23,7 +23,7 @@ export default function Search({ onSearch, filter, onFilterChange }: SearchBarPr
         className="w-full"
       />
       <Select value={filter} onValueChange={(val: StatusFilter) => onFilterChange(val)} key={filter}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px] cursor-pointer bg-amber-50">
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
