@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
-import './App.css';
+import '@/App.css';
 import Search from '@/components/SearchBar';
 import TodoList from '@/components/TodoList';
-import type { StatusFilter, Todo } from './types';
+import type { StatusFilter, Todo } from '@/types';
 import { debounce } from 'throttle-debounce';
 import { TodoSkeleton } from '@/components/TodoSkeleton';
+import { useDispatch } from 'react-redux';
+import { fetchTodosAsync, setFilteredTodos, todoStore } from '@/stores/todo';
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [filteredTodos, setFilteredTodos] = useState<Todo[]>([]);
+  const dispatch = useDispatch<any>();
+  const { todoStoreProperties } = todoStore.getState();
+  const { todos, filteredTodos, status } = todoStoreProperties;
+
   const [selectedFilter, setSelectedFilter] = useState<StatusFilter>('all');
 
   const fuse = new Fuse<Todo>(todos, {
@@ -18,22 +22,15 @@ function App() {
   });
 
   useEffect(() => {
-    const fetchTodos = async () => {
-      const res = await fetch('https://jsonplaceholder.typicode.com/todos');
-      const data: Todo[] = await res.json();
-      setTodos(data);
-      setFilteredTodos(data);
-    };
-
-    fetchTodos();
-  }, []);
+    dispatch(fetchTodosAsync());
+  }, [dispatch]);
 
   const handleSearch = (query: string) => {
     if (query.trim() === '') {
-      setFilteredTodos(todos);
+      dispatch(setFilteredTodos(todos));
     } else {
       const results = fuse.search(query);
-      setFilteredTodos(results.map((res) => res.item));
+      dispatch(setFilteredTodos(results.map((res) => res.item)));
     }
   };
 
@@ -48,13 +45,20 @@ function App() {
       result = todos.filter((todo) => !todo.completed);
     }
 
-    setFilteredTodos(result);
+    dispatch(setFilteredTodos(result));
   };
 
   return (
     <div className="w-xl mx-auto mt-6 *:w-full">
       <Search filter={selectedFilter} onSearch={debounce(300, handleSearch)} onFilterChange={handleFilterChange} />
-      {todos.length ? <TodoList todos={filteredTodos} /> : <TodoSkeleton />}
+      {/* Debug Status: {status} */}
+      {status === 'loading' ? (
+        <TodoSkeleton />
+      ) : status === 'failed' ? (
+        <div className="text-red-500">Failed to fetch task list. Please try again.</div>
+      ) : (
+        <TodoList todos={filteredTodos} />
+      )}
     </div>
   );
 }
