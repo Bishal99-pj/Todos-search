@@ -3,12 +3,17 @@ import Fuse from 'fuse.js';
 import './App.css';
 import Search from '@/components/SearchBar';
 import TodoList from '@/components/TodoList';
-import type { Todo } from './types';
+import type { StatusFilter, Todo } from './types';
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [query, setQuery] = useState<string>('');
   const [filteredTodos, setFilteredTodos] = useState<Todo[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<StatusFilter>('all');
+
+  const fuse = new Fuse<Todo>(todos, {
+    keys: ['title', 'id'],
+    threshold: 0.3,
+  });
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -21,23 +26,32 @@ function App() {
     fetchTodos();
   }, []);
 
-  useEffect(() => {
-    const fuse = new Fuse<Todo>(todos, {
-      keys: ['title', 'id'],
-      threshold: 0.3,
-    });
-
+  const handleSearch = (query: string) => {
     if (query.trim() === '') {
       setFilteredTodos(todos);
     } else {
       const results = fuse.search(query);
       setFilteredTodos(results.map((res) => res.item));
     }
-  }, [query, todos]);
+  };
+
+  const handleFilterChange = (filter: StatusFilter) => {
+    setSelectedFilter(filter);
+
+    let result = todos;
+
+    if (filter === 'completed') {
+      result = todos.filter((todo) => todo.completed);
+    } else if (filter === 'pending') {
+      result = todos.filter((todo) => !todo.completed);
+    }
+
+    setFilteredTodos(result);
+  };
 
   return (
     <div className="max-w-2xl mx-auto mt-6">
-      <Search query={query} setQuery={setQuery} />
+      <Search filter={selectedFilter} onSearch={handleSearch} onFilterChange={handleFilterChange} />
       <TodoList todos={filteredTodos} />
     </div>
   );
