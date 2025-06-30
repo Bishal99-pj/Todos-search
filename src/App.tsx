@@ -5,6 +5,7 @@ import Search from '@/components/SearchBar';
 import TodoList from '@/components/TodoList';
 import type { StatusFilter, Todo } from './types';
 import { debounce } from 'throttle-debounce';
+import { TodoSkeleton } from '@/components/TodoSkeleton';
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -53,7 +54,7 @@ function App() {
   return (
     <div className="w-xl mx-auto mt-6 *:w-full">
       <Search filter={selectedFilter} onSearch={debounce(300, handleSearch)} onFilterChange={handleFilterChange} />
-      <TodoList todos={filteredTodos} />
+      {todos.length ? <TodoList todos={filteredTodos} /> : <TodoSkeleton />}
     </div>
   );
 }
